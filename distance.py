@@ -3,21 +3,9 @@ import re
 from munkres import Munkres
 from unidecode import unidecode
 from repoze.lru import lru_cache
+from functools import partial
 
 from inspirehep.modules.authors.utils import scan_author_string_for_phrases
-
-
-def obj_edit_dist(l1, l2):
-    dst = [[max(r, c) for c in xrange(len(l2) + 1)]
-           for r in xrange(len(l1) + 1)]
-
-    for r, e1 in enumerate(l1, 1):
-        for c, e2 in enumerate(l2, 1):
-            d = 0 if e1 == e2 else 1
-            dst[r][c] = min(dst[r - 1][c] + 1,
-                            dst[r][c - 1] + 1,
-                            dst[r - 1][c - 1] + d)
-    return dst[len(l1)][len(l2)]
 
 
 def normed_edit_dist(s1, s2):
@@ -53,11 +41,17 @@ def parse_name(name):
             parsed.append(Token(token))
     return parsed
 
-def normalize_author_name(author):
+
+def normalize_author_name(author,
+                          max_first_name_tokens=None,
+                          first_name_to_initial=False):
     name = author.get('full_name')
     phrases = scan_author_string_for_phrases(name)
+    last_fn_char = 1 if first_name_to_initial else None
+    last_fn_idx = max_first_name_tokens
     return (tuple(n.lower() for n in phrases['lastnames']) +
-            tuple(n[0].lower() for n in phrases['nonlastnames'][:1]))
+            tuple(n.lower()[:last_fn_char]
+                  for n in phrases['nonlastnames'][:last_fn_idx]))
 
 
 def token_distance(t1, t2):
@@ -86,3 +80,19 @@ def author_munkredist(x, y):
         cost += dst[ix][iy]
 
     return cost / max(min(len(x), len(y)), 1)
+
+
+lowercase_id_norm = partial(normalize_author_name)
+lowercase_fn_initials_norm = partial(normalize_author_name,
+                                     first_name_to_initial=True)
+lowercase_fst_initial_norm = partial(normalize_author_name,
+                                     first_name_to_initial=True,
+                                     max_first_name_tokens=1)
+last_name_only_norm = partial(normalize_author_name,
+                               first_name_to_initial=True,
+                               max_first_name_tokens=0)
+
+
+norm_funcs = [lowercase_fn_initials_norm,
+              lowercase_fst_initial_norm,
+              last_name_only_norm]
