@@ -1,0 +1,6 @@
+ujson
+beard
+munkres
+editdistance
+repoze.lru
+
