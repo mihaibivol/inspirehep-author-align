@@ -76,9 +76,14 @@ def author_munkredist(x, y):
     matcher = Munkres()
     idx = matcher.compute(dst)
     cost = 0.0
+    matched_only_initials = True
     for ix, iy in idx:
         cost += dst[ix][iy]
-
+        if not any(isinstance(x, Initial)
+                   for x in (parsed_x[ix], parsed_y[iy])):
+            matched_only_initials = False
+    if matched_only_initials:
+        return 1.0
     return cost / max(min(len(x), len(y)), 1)
 
 
