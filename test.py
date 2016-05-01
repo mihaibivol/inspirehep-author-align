@@ -8,7 +8,7 @@ import ujson as json
 from timeit import default_timer
 from Queue import Queue
 
-from distance import author_munkredist
+from distance import beardist
 from distance import norm_funcs
 from match import match
 
@@ -187,4 +187,4 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         max_tests = int(sys.argv[1])
     ProgramState(max_tests,
-                 .1, author_munkredist, norm_funcs).main()
+                 .5, beardist, norm_funcs).main()
