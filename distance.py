@@ -1,11 +1,34 @@
 import editdistance
 import re
+import pickle
+import numpy as np
 from munkres import Munkres
 from unidecode import unidecode
 from repoze.lru import lru_cache
 from functools import partial
 
 from inspirehep.modules.authors.utils import scan_author_string_for_phrases
+
+dist_estimator = pickle.load(open('./linkage.dat', 'rb'))
+SIGN = 0
+
+
+def build_beard_auth(auth):
+    aff = auth.get('affiliations', [])
+    global SIGN
+    SIGN += 1
+    if aff:
+        aff = aff[0]['value']
+    return {'author_affiliation': aff,
+            'author_name': auth.get('full_name', ''),
+            'publication': {'authors': [], 'year': 2016},
+            'signature_id': SIGN}
+
+
+def beardist(x, y):
+    x = build_beard_auth(x)
+    y = build_beard_auth(y)
+    return dist_estimator.predict_proba(np.array([[x, y]]))[0][1]
 
 
 def normed_edit_dist(s1, s2):

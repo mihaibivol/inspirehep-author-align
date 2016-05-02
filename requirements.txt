@@ -3,4 +3,6 @@ beard
 munkres
 editdistance
 repoze.lru
+numpy
+scipy
 
