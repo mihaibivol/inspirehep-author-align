@@ -80,15 +80,19 @@ def _match_by_norm_func(l1, l2, norm_fn, dist_fn, thresh):
 
     for normed, l1_elements in buckets_l1.items():
         l2_elements = buckets_l2.get(normed, [])
-        if len(l1_elements) != 1 or len(l2_elements) != 1:
+        if len(l1_elements) > 3 or len(l2_elements) > 3:
             continue
-        e1_idx, e1 = l1_elements[0]
-        e2_idx, e2 = l2_elements[0]
-        if dist_fn(e1, e2) > thresh:
+        if not l1_elements or not l2_elements:
             continue
-        l1_only_idx.remove(e1_idx)
-        l2_only_idx.remove(e2_idx)
-        common.append([e1, e2])
+
+        dist_matrix = [[dist_fn(e1, e2) for e2_i, e2 in l2_elements]
+                       for e1_i, e1 in l1_elements]
+        munk_cmn, l1_m, l2_m = _match_munkres(l1_elements, l2_elements,
+                                              dist_matrix, thresh)
+        for (e1_idx, e1), (e2_idx, e2) in munk_cmn:
+            l1_only_idx.remove(e1_idx)
+            l2_only_idx.remove(e2_idx)
+            common.append([e1, e2])
 
     l1_only = _filter_indices(l1, l1_only_idx)
     l2_only = _filter_indices(l2, l2_only_idx)
